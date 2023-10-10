@@ -8,96 +8,58 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
+import {
+  YMaps,
+  Map,
+  Placemark,
+  Clusterer,
+  ZoomControl,
+} from "@pbe/react-yandex-maps";
+import { json } from "stream/consumers";
+import axios, { AxiosResponse } from "axios";
+import { GetAllCoordinatesRes, coordinateObjEntity } from "./GetCoordinatesRes";
+import pvz from "@/data/pvz.json";
 
-interface PlacemarkProps {
-  type: String;
-  features: Array<Mark>;
+interface IPVZ {
+  _id: I_id;
+  code: string;
+  name: string;
+  location: ILocation;
+  workedTime: string;
+  pics: string[];
+  type: string;
+  phone: string[];
+  deliveryCompany: string;
+  ___v: number;
 }
-
-interface Mark {
-  type: String;
-  id: Number;
-  geometry: {
-    type: String;
-    coordinates: Array<number>[];
-  };
-  properties: {
-    hintContent: String;
-  };
-  status: String;
+interface I_id {
+  $oid: string;
+}
+interface ILocation {
+  longitude: string;
+  latitude: string;
+  country_code: string;
+  region_code: number;
+  region: string;
+  city_code: number;
+  fullAddress: string;
+  city: string;
+  fiasCode: string;
+  postal_code: string;
+  address: string;
 }
 
 export default function CustomMap() {
-  const data = `{
-    "type": "FeatureCollection",
-    "features": [{
-        "type": "Feature",
-        "id": 0,
-        "geometry": {
-          "type": "Point",
-          "coordinates": [53.674244, 23.737227]
-        },
-        "properties": {
-          "hintContent": "Казановского 11"
-        },
-        "status": "free"
-      },
-      {
-        "type": "Feature",
-        "id": 1,
-        "geometry": {
-          "type": "Point",
-          "coordinates": [53.682719, 23.831406]
-        },
-        "properties": {
-          "hintContent": "Виленская 6"
-        },
-        "status": "free"
-      },
-      {
-        "type": "Feature",
-        "id": 2,
-        "geometry": {
-          "type": "Point",
-          "coordinates": [53.656318, 23.849840]
-        },
-        "properties": {
-          "hintContent": "Янки Купалы 80/2"
-        },
-        "status": "busy"
-      },
-      {
-        "type": "Feature",
-        "id": 3,
-        "geometry": {
-          "type": "Point",
-          "coordinates": [53.622756, 23.814832]
-        },
-        "properties": {
-          "hintContent": "Великая Ольшанка 15"
-        },
-        "status": "busy"
-      },
-      {
-        "type": "Feature",
-        "id": 4,
-        "geometry": {
-          "type": "Point",
-          "coordinates": [53.685108, 23.839967]
-        },
-        "properties": {
-          "hintContent": "Ожешко 22"
-        },
-        "status": "free"
-      }
-    ]
-  }`;
+  //const [zoom, setZoom] = useState(5);
 
-  const points: PlacemarkProps = JSON.parse(data) as PlacemarkProps;
-  const Marks: Array<Mark> = points.features;
-  const MarksR: Array<Mark> = Marks.filter((point) => point.status === "free");
-  const MarksB: Array<Mark> = Marks.filter((point) => point.status === "busy");
+  //const points: PlacemarkProps = JSON.parse(data) as PlacemarkProps;
+  const Marks: Array<IPVZ> = pvz as Array<IPVZ>;
+  const MarksB: Array<IPVZ> = Marks.filter(
+    (point) => point.deliveryCompany === "Почта России"
+  );
+  const MarksG: Array<IPVZ> = Marks.filter(
+    (point) => point.deliveryCompany === "СДЭК"
+  );
 
   return (
     <div>
@@ -107,22 +69,18 @@ export default function CustomMap() {
           defaultState={{
             center: [55.751574, 37.573856],
             zoom: 5,
+
+            controls: [],
           }}
         >
-          {MarksR.map((point) => (
-            <>
-              <Placemark
-                key={`id-` + point.id}
-                geometry={point.geometry.coordinates}
-                options={{ iconColor: "#FF0000" }}
-              />
-            </>
-          ))}
+          <>
+            <ZoomControl options={{ visible: false }} />
+          </>
           {MarksB.map((point) => (
             <>
               <Placemark
-                key={`id-` + point.id}
-                geometry={point.geometry.coordinates}
+                key={point._id.$oid}
+                geometry={[point.location.longitude, point.location.latitude]}
                 options={{ iconColor: "#0000FF" }}
               />
             </>
